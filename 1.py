@@ -1,16 +1,83 @@
+import io
 import sys
 import sqlite3
 import datetime
 from PyQt5.QtCore import Qt
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QTabWidget, QPushButton, QMainWindow, QLabel, \
-    QComboBox, QTableWidgetItem, QTableWidget, QSpinBox, QLineEdit
+    QTableWidgetItem, QTableWidget, QSpinBox, QLineEdit
+
+add_registration_ui = '''<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>366</width>
+    <height>380</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>341</width>
+      <height>321</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QCalendarWidget" name="calendarWidget"/>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QPushButton" name="cancelButton">
+         <property name="text">
+          <string>Закрыть</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="continueButton">
+         <property name="text">
+          <string>Продолжить</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>366</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+'''
 
 
 class EditScheduleWidget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setGeometry(300, 300, 300, 100)
         self.setFixedSize(300, 100)
         self.setWindowTitle('Новые данные')
 
@@ -68,7 +135,6 @@ class EditScheduleWidget(QMainWindow):
 class AddServiceWidget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setGeometry(300, 300, 300, 200)
         self.setFixedSize(300, 200)
         self.setWindowTitle('Новые данные')
 
@@ -165,58 +231,17 @@ class AddServiceWidget(QMainWindow):
 class AddRegistrationWidget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-
-        self.setGeometry(300, 300, 400, 400)
-        self.setFixedSize(400, 400)
+        f = io.StringIO(add_registration_ui)
+        uic.loadUi(f, self)
+        self.setFixedSize(370, 380)
         self.setWindowTitle('Новые данные')
         self.statusbar = self.statusBar()
 
-        self.Button = QPushButton('Сохранить', self)
-        self.Button.resize(120, 30)
-        self.Button.move(260, 350)
+        self.cancelButton.clicked.connect(self.close)
+        self.continueButton.clicked.connect(self.try_to_add)
 
-        self.closeButton = QPushButton('Закрыть', self)
-        self.closeButton.resize(120, 30)
-        self.closeButton.move(10, 350)
-
-        self.day_lbl = QLabel('День', self)
-        self.day_lbl.move(10, 10)
-
-        self.day = QLineEdit(self)
-        self.day.move(180, 10)
-        self.day.resize(180, 30)
-
-        self.month_lbl = QLabel('Месяц', self)
-        self.month_lbl.move(10, 60)
-
-        self.month = QComboBox(self)
-        self.month.addItems(self.parent().months.values())
-        self.month.move(180, 60)
-        self.month.resize(180, 30)
-
-        self.year_lbl = QLabel('Год', self)
-        self.year_lbl.move(10, 110)
-
-        self.year = QLineEdit(self)
-        self.year.move(180, 110)
-        self.year.resize(180, 30)
-
-        self.time_lbl = QLabel('Время начала\n(с точностью до часов)', self)
-        self.time_lbl.resize(180, 30)
-        self.time_lbl.move(10, 160)
-
-        self.time = QSpinBox(self)
-        self.time.setRange(0, 24)
-        self.time.move(220, 160)
-
-        self.service_lbl = QLabel('Услуга', self)
-        self.service_lbl.move(10, 210)
-        self.service_lbl.resize(180, 50)
-
-        self.service = QComboBox(self)
-        self.service.move(180, 210)
-        self.service.resize(180, 50)
-        self.service.addItems(list(map(lambda x: f'{x[1]}, {x[3]}ч\n({x[2]}руб.)', self.parent().get_services())))
+        self.con = sqlite3.connect("barbershop.db")
+        self.cur = self.con.cursor()
 
     def try_to_add(self):
         if self.get_adding_verdict():
@@ -225,7 +250,14 @@ class AddRegistrationWidget(QMainWindow):
             self.close()
 
     def get_adding_verdict(self):
-        pass
+        date = self.calendarWidget.selectedDate().toPyDate()
+        try:
+            # toDo: new class
+            return True
+
+        except Exception:
+            self.statusbar.showMessage('Неверно заполнена форма')
+            return False
 
 
 class BarberShop(QMainWindow):
@@ -366,10 +398,6 @@ class BarberShop(QMainWindow):
             self.edit_work_schedule_widget.show()
             self.edit_work_schedule_widget.time.setValue(int(self.scheduleTable.item(row, col).text().split(':')[0]))
 
-    def get_services(self):
-        query = self.cur.execute("SELECT * from services").fetchall()
-        return query
-
     def cur_week_only(self):
         pass
 
@@ -436,29 +464,25 @@ class BarberShop(QMainWindow):
         self.add_service_widget.show()
 
     def update_registrations(self):
-        self.registrations_query = self.cur.execute('''select r.id, r.Day, r.Month, r.Year, r.WeekDay, r.StartTime,
- r.EndTime, r.Service, w.Name as Master, wp.name as WorlPlacePlace
- from Registrations as R, workers as W, workplaces as Wp
-inner join Registrations on R.MasterID = W.id
-inner join Registrations on R.WorkPlaceID = Wp.id''').fetchall()
+        self.registrations_query = self.cur.execute('''select r.id, r.datetime, r.duration, r.Service, w.Name as Master
+         from Registrations as R, workers as W
+        inner join Registrations on R.MasterID = W.id''').fetchall()
 
         self.registrationsTable.setRowCount(len(self.registrations_query))
-        self.registrationsTable.setColumnCount(len(self.registrations_query[0]))
+        self.registrationsTable.setColumnCount(9)
 
         title = ['ID', 'Число', 'Месяц', 'Год', 'День недели', 'Время\nначала',
-                 'Время\nокончания', 'Услуга', 'Мастер', 'Место']
+                 'Время\nокончания', 'Услуга', 'Мастер']
         self.registrationsTable.setHorizontalHeaderLabels(title)
 
         for i, elem in enumerate(self.registrations_query):
-            for j, val in enumerate(elem):
-                if j == 2:
-                    self.registrationsTable.setItem(i, j, QTableWidgetItem(self.months[val]))
-                elif j == 4:
-                    self.registrationsTable.setItem(i, j, QTableWidgetItem(self.weekdays[val]))
-                elif 4 < j < 7:
-                    self.registrationsTable.setItem(i, j, QTableWidgetItem(str(val) + ':00'))
-                else:
-                    self.registrationsTable.setItem(i, j, QTableWidgetItem(str(val)))
+            row_date_time = datetime.datetime.strptime(elem[1], '%Y-%m-%d %H')
+            row_date = row_date_time.date()
+            year, month, day, start_time = str(row_date).split('-') + [self.registrations_query[i][1].split()[-1]]
+            row = [elem[0], day, month, year, self.weekdays[row_date.weekday()], start_time + ':00',
+                   str(elem[2] + int(start_time)) + ':00', *elem[3:]]
+            for j, val in enumerate(row):
+                self.registrationsTable.setItem(i, j, QTableWidgetItem(str(val)))
                 self.registrationsTable.item(i, j).setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
 
         self.registrationsTable.resizeColumnsToContents()
@@ -466,7 +490,6 @@ inner join Registrations on R.WorkPlaceID = Wp.id''').fetchall()
     def new_registrations(self):
         self.status.showMessage('')
         self.add_registration_widget = AddRegistrationWidget(self)
-        self.add_registration_widget.Button.clicked.connect(self.add_registration_widget.try_to_add)
         self.add_registration_widget.show()
 
 
