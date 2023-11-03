@@ -202,12 +202,21 @@ class AddRegistrationWidget(QMainWindow):
         self.year.resize(180, 30)
 
         self.time_lbl = QLabel('Время начала\n(с точностью до часов)', self)
-        self.time_lbl.resize(200, 30)
+        self.time_lbl.resize(180, 30)
         self.time_lbl.move(10, 160)
 
         self.time = QSpinBox(self)
         self.time.setRange(0, 24)
         self.time.move(220, 160)
+
+        self.service_lbl = QLabel('Услуга', self)
+        self.service_lbl.move(10, 210)
+        self.service_lbl.resize(180, 50)
+
+        self.service = QComboBox(self)
+        self.service.move(180, 210)
+        self.service.resize(180, 50)
+        self.service.addItems(list(map(lambda x: f'{x[1]}, {x[3]}ч\n({x[2]}руб.)', self.parent().get_services())))
 
     def try_to_add(self):
         if self.get_adding_verdict():
@@ -222,7 +231,7 @@ class AddRegistrationWidget(QMainWindow):
 class BarberShop(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setGeometry(200, 200, 1200, 600)
+        self.setGeometry(200, 200, 1000, 600)
         self.setWindowTitle('Барбершоп')
 
         self.status = self.statusBar()
@@ -281,6 +290,7 @@ class BarberShop(QMainWindow):
         registrations_layout.addWidget(self.registrationsTable, 1, 0, 8, 8)
 
         self.tabWidget.addTab(self.registrationsTab, 'Записи')
+        self.registrationsTable.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
 
         # интерфейс третьей страницы
         self.workersTable = QTableWidget(self)
@@ -356,6 +366,10 @@ class BarberShop(QMainWindow):
             self.edit_work_schedule_widget.show()
             self.edit_work_schedule_widget.time.setValue(int(self.scheduleTable.item(row, col).text().split(':')[0]))
 
+    def get_services(self):
+        query = self.cur.execute("SELECT * from services").fetchall()
+        return query
+
     def cur_week_only(self):
         pass
 
@@ -422,8 +436,8 @@ class BarberShop(QMainWindow):
         self.add_service_widget.show()
 
     def update_registrations(self):
-        self.registrations_query = self.cur.execute('''select r.id, r.Day, r.Month, r.Year, r.WeekDay, r.Time,
- w.Name as Master, wp.name as WorlPlacePlace
+        self.registrations_query = self.cur.execute('''select r.id, r.Day, r.Month, r.Year, r.WeekDay, r.StartTime,
+ r.EndTime, r.Service, w.Name as Master, wp.name as WorlPlacePlace
  from Registrations as R, workers as W, workplaces as Wp
 inner join Registrations on R.MasterID = W.id
 inner join Registrations on R.WorkPlaceID = Wp.id''').fetchall()
@@ -431,7 +445,8 @@ inner join Registrations on R.WorkPlaceID = Wp.id''').fetchall()
         self.registrationsTable.setRowCount(len(self.registrations_query))
         self.registrationsTable.setColumnCount(len(self.registrations_query[0]))
 
-        title = ['ID', 'Число', 'Месяц', 'Год', 'День недели', 'Время', 'Мастер', 'Место']
+        title = ['ID', 'Число', 'Месяц', 'Год', 'День недели', 'Время\nначала',
+                 'Время\nокончания', 'Услуга', 'Мастер', 'Место']
         self.registrationsTable.setHorizontalHeaderLabels(title)
 
         for i, elem in enumerate(self.registrations_query):
@@ -440,11 +455,13 @@ inner join Registrations on R.WorkPlaceID = Wp.id''').fetchall()
                     self.registrationsTable.setItem(i, j, QTableWidgetItem(self.months[val]))
                 elif j == 4:
                     self.registrationsTable.setItem(i, j, QTableWidgetItem(self.weekdays[val]))
-                elif j == 5:
+                elif 4 < j < 7:
                     self.registrationsTable.setItem(i, j, QTableWidgetItem(str(val) + ':00'))
                 else:
                     self.registrationsTable.setItem(i, j, QTableWidgetItem(str(val)))
                 self.registrationsTable.item(i, j).setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+
+        self.registrationsTable.resizeColumnsToContents()
 
     def new_registrations(self):
         self.status.showMessage('')
