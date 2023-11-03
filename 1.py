@@ -1,16 +1,18 @@
 import sys
 import sqlite3
+import datetime
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QTabWidget, QPushButton, QMainWindow, QLabel, \
-    QComboBox, QTableWidgetItem, QMessageBox, QTableWidget, QSpinBox, QLineEdit
+    QComboBox, QTableWidgetItem, QTableWidget, QSpinBox, QLineEdit
 
 
 class EditScheduleWidget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setGeometry(300, 300, 300, 100)
-        self.setWindowTitle('Изменение данных')
+        self.setFixedSize(300, 100)
+        self.setWindowTitle('Новые данные')
 
         self.time_lbl = QLabel('Время (с точностью до часов)', self)
         self.time_lbl.resize(200, 30)
@@ -67,7 +69,8 @@ class AddServiceWidget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setGeometry(300, 300, 300, 200)
-        self.setWindowTitle('Изменение данных')
+        self.setFixedSize(300, 200)
+        self.setWindowTitle('Новые данные')
 
         self.name_lbl = QLabel('Название', self)
         self.name_lbl.resize(100, 30)
@@ -159,10 +162,67 @@ class AddServiceWidget(QMainWindow):
             return False
 
 
+class AddRegistrationWidget(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setGeometry(300, 300, 400, 400)
+        self.setFixedSize(400, 400)
+        self.setWindowTitle('Новые данные')
+        self.statusbar = self.statusBar()
+
+        self.Button = QPushButton('Сохранить', self)
+        self.Button.resize(120, 30)
+        self.Button.move(260, 350)
+
+        self.closeButton = QPushButton('Закрыть', self)
+        self.closeButton.resize(120, 30)
+        self.closeButton.move(10, 350)
+
+        self.day_lbl = QLabel('День', self)
+        self.day_lbl.move(10, 10)
+
+        self.day = QLineEdit(self)
+        self.day.move(180, 10)
+        self.day.resize(180, 30)
+
+        self.month_lbl = QLabel('Месяц', self)
+        self.month_lbl.move(10, 60)
+
+        self.month = QComboBox(self)
+        self.month.addItems(self.parent().months.values())
+        self.month.move(180, 60)
+        self.month.resize(180, 30)
+
+        self.year_lbl = QLabel('Год', self)
+        self.year_lbl.move(10, 110)
+
+        self.year = QLineEdit(self)
+        self.year.move(180, 110)
+        self.year.resize(180, 30)
+
+        self.time_lbl = QLabel('Время начала\n(с точностью до часов)', self)
+        self.time_lbl.resize(200, 30)
+        self.time_lbl.move(10, 160)
+
+        self.time = QSpinBox(self)
+        self.time.setRange(0, 24)
+        self.time.move(220, 160)
+
+    def try_to_add(self):
+        if self.get_adding_verdict():
+            self.con.commit()
+            self.parent().update_registrations()
+            self.close()
+
+    def get_adding_verdict(self):
+        pass
+
+
 class BarberShop(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setGeometry(200, 200, 650, 600)
+        self.setGeometry(200, 200, 1200, 600)
         self.setWindowTitle('Барбершоп')
 
         self.status = self.statusBar()
@@ -213,6 +273,10 @@ class BarberShop(QMainWindow):
         self.discardButton.clicked.connect(self.show_registrations)
         registrations_layout.addWidget(self.discardButton, 0, 3, 1, 1)
 
+        self.newRegistrationButton = QPushButton('Добавить запись', self)
+        self.newRegistrationButton.clicked.connect(self.new_registrations)
+        registrations_layout.addWidget(self.newRegistrationButton, 0, 7, 1, 1)
+
         self.registrationsTable = QTableWidget(self)
         registrations_layout.addWidget(self.registrationsTable, 1, 0, 8, 8)
 
@@ -229,7 +293,7 @@ class BarberShop(QMainWindow):
         self.editServiceButton.clicked.connect(self.edit_service)
         services_layout.addWidget(self.editServiceButton, 0, 0, 1, 1)
 
-        self.addServiceButton = QPushButton('Добавить услугу', self)
+        self.addServiceButton = QPushButton('Добавить', self)
         self.addServiceButton.clicked.connect(self.add_service)
         services_layout.addWidget(self.addServiceButton, 0, 1, 1, 1)
 
@@ -252,10 +316,14 @@ class BarberShop(QMainWindow):
         self.cur = self.con.cursor()
 
         # отображение данных
+        self.weekdays = ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"]
+        self.months = {1: 'январь', 2: 'февраль', 3: 'март', 4: 'апрель', 5: 'май', 6: 'июнь',
+                  7: 'июль', 8: 'август', 9: 'сентябрь', 10: 'октябрь', 11: 'ноябрь', 12: 'декабрь'}
         self.update_schedule()
         self.show_registrations()
         self.show_workers()
         self.update_services()
+        self.update_registrations()
 
     def update_schedule(self):
         self.schedule_query = self.cur.execute("SELECT * from WorkSсhedule").fetchall()
@@ -352,6 +420,37 @@ class BarberShop(QMainWindow):
         self.add_service_widget = AddServiceWidget(self)
         self.add_service_widget.Button.clicked.connect(self.add_service_widget.try_to_add)
         self.add_service_widget.show()
+
+    def update_registrations(self):
+        self.registrations_query = self.cur.execute('''select r.id, r.Day, r.Month, r.Year, r.WeekDay, r.Time,
+ w.Name as Master, wp.name as WorlPlacePlace
+ from Registrations as R, workers as W, workplaces as Wp
+inner join Registrations on R.MasterID = W.id
+inner join Registrations on R.WorkPlaceID = Wp.id''').fetchall()
+
+        self.registrationsTable.setRowCount(len(self.registrations_query))
+        self.registrationsTable.setColumnCount(len(self.registrations_query[0]))
+
+        title = ['ID', 'Число', 'Месяц', 'Год', 'День недели', 'Время', 'Мастер', 'Место']
+        self.registrationsTable.setHorizontalHeaderLabels(title)
+
+        for i, elem in enumerate(self.registrations_query):
+            for j, val in enumerate(elem):
+                if j == 2:
+                    self.registrationsTable.setItem(i, j, QTableWidgetItem(self.months[val]))
+                elif j == 4:
+                    self.registrationsTable.setItem(i, j, QTableWidgetItem(self.weekdays[val]))
+                elif j == 5:
+                    self.registrationsTable.setItem(i, j, QTableWidgetItem(str(val) + ':00'))
+                else:
+                    self.registrationsTable.setItem(i, j, QTableWidgetItem(str(val)))
+                self.registrationsTable.item(i, j).setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+
+    def new_registrations(self):
+        self.status.showMessage('')
+        self.add_registration_widget = AddRegistrationWidget(self)
+        self.add_registration_widget.Button.clicked.connect(self.add_registration_widget.try_to_add)
+        self.add_registration_widget.show()
 
 
 if __name__ == '__main__':
