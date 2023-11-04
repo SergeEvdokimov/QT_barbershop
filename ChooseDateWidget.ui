@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>366</width>
-    <height>380</height>
+    <width>440</width>
+    <height>440</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>341</width>
-      <height>321</height>
+      <width>411</width>
+      <height>381</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -28,11 +28,25 @@
       <widget class="QCalendarWidget" name="calendarWidget"/>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
+      <layout class="QHBoxLayout" name="service_layout">
+       <item>
+        <widget class="QLabel" name="service_lbl">
+         <property name="text">
+          <string>Услуга</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="service_comboBox"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="buttons_layout">
        <item>
         <widget class="QPushButton" name="cancelButton">
          <property name="text">
-          <string>Закрыть</string>
+          <string>Отмена</string>
          </property>
         </widget>
        </item>
@@ -53,7 +67,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>366</width>
+     <width>440</width>
      <height>21</height>
     </rect>
    </property>
