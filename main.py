@@ -229,7 +229,7 @@ class AddServiceWidget(QMainWindow):
         self.setWindowFlag(Qt.WindowCloseButtonHint, False)
 
         # label и lineedit для названия услуги
-        self.name_lbl = QLabel('Название', self)
+        self.name_lbl = QLabel('Название услуги', self)
         self.name_lbl.resize(100, 30)
         self.name_lbl.move(10, 10)
 
@@ -449,8 +449,8 @@ class AddFiltersWidget(QMainWindow):
         uic.loadUi(ui, self)
 
         # работа с параметрами окна
-        self.setGeometry(300, 300, 290, 180)
-        self.setFixedSize(290, 180)
+        self.setGeometry(300, 300, 300, 180)
+        self.setFixedSize(300, 180)
         self.setWindowFlag(Qt.WindowCloseButtonHint, False)
 
         self.status = self.statusBar()  # статус бар для вывода информации пользователю
