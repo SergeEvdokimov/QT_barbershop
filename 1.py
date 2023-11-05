@@ -2,13 +2,16 @@ import io
 import sys
 import sqlite3
 import datetime
-from PyQt5 import QtWidgets, uic
+import PyQt5.uic as uic
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QTabWidget, QPushButton, QMainWindow, QLabel, \
-    QTableWidgetItem, QTableWidget, QMessageBox, QLineEdit
+    QTableWidgetItem, QTableWidget, QMessageBox, QLineEdit, QAbstractScrollArea
 
 weekdays = ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"]
+months = {1: 'январь', 2: 'февраль', 3: 'март', 4: 'апрель', 5: 'май', 6: 'июнь', 7: 'июль', 8: 'август',
+          9: 'сентябрь', 10: 'октябрь', 11: 'ноябрь', 12: 'декабрь'}
+
 choose_date_ui = '''<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
@@ -79,6 +82,123 @@ choose_date_ui = '''<?xml version="1.0" encoding="UTF-8"?>
      <x>0</x>
      <y>0</y>
      <width>440</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+'''
+filters_ui = '''<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>290</width>
+    <height>180</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Добавление фильтров</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>9</y>
+      <width>271</width>
+      <height>141</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="vertical_layout">
+     <item>
+      <layout class="QHBoxLayout" name="master_layout">
+       <item>
+        <widget class="QLabel" name="master_label">
+         <property name="text">
+          <string>Выберите мастера</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="masters_comboBox"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="start_date_layout">
+       <item>
+        <widget class="QLabel" name="start_date_label">
+         <property name="text">
+          <string>С</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="start_day"/>
+       </item>
+       <item>
+        <widget class="QComboBox" name="start_month"/>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="start_year"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="end_date_layout">
+       <item>
+        <widget class="QLabel" name="end_date_label">
+         <property name="text">
+          <string>По</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="end_day"/>
+       </item>
+       <item>
+        <widget class="QComboBox" name="end_month"/>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="end_year"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="buttons_layout">
+       <item>
+        <widget class="QPushButton" name="closeButton">
+         <property name="text">
+          <string>Отмена</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="saveButton">
+         <property name="text">
+          <string>Сохранить</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>290</width>
      <height>21</height>
     </rect>
    </property>
@@ -200,7 +320,7 @@ class AddRegistrationWidget(QMainWindow):
         self.timetable_query = cur.execute(f'''SELECT * from WorkSсhedule 
         where weekDay == {self.date.weekday()}''').fetchall()[0]
         self.workers_query = cur.execute(f'''select * from workers''').fetchall()
-        self.addingTable.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.addingTable.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
         workers = {}
         for line in self.workers_query:
@@ -246,8 +366,6 @@ class AddRegistrationWidget(QMainWindow):
             master_id = self.addingTable.verticalHeaderItem(row).text().split()[-1][:-1]
             cur.execute(f'''insert into Registrations (date, masterID, Service, StartTime)
              values ("{date}", {master_id}, "{service}", {time})''')
-            print(f'''insert into Registrations (date, masterID, Service, StartTime)
-             values ("{date}", {master_id}, "{service}", {time})''')
             return True
         except Exception:
             self.statusbar.showMessage('Выберите время и мастера')
@@ -262,8 +380,8 @@ class AddRegistrationWidget(QMainWindow):
 class ChooseDateWidget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        f = io.StringIO(choose_date_ui)
-        uic.loadUi(f, self)
+        ui = io.StringIO(choose_date_ui)
+        uic.loadUi(ui, self)
         self.setFixedSize(440, 440)
         self.setWindowTitle('Новые данные')
         self.setWindowFlag(Qt.WindowCloseButtonHint, False)
@@ -284,11 +402,88 @@ class ChooseDateWidget(QMainWindow):
         self.add_registration_widget.show()
 
 
+class AddFiltersWidget(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        ui = io.StringIO(filters_ui)
+        uic.loadUi(ui, self)
+        self.setGeometry(300, 300, 290, 180)
+        self.setFixedSize(290, 180)
+        self.setWindowFlag(Qt.WindowCloseButtonHint, False)
+        self.status = self.statusBar()
+
+        self.closeButton.clicked.connect(self.close)
+        self.saveButton.clicked.connect(self.try_to_save)
+
+        workers_query = cur.execute(f'''select * from workers''').fetchall()
+        workers = ['Не важно'] + list(map(lambda x: f'{x[1]} (id: {x[0]})', workers_query))
+        self.masters_comboBox.addItems(workers)
+
+        for i in workers[1:]:
+            if self.parent().master_id == int(i.split(': ')[1][:-1]):
+                self.masters_comboBox.setCurrentText(i)
+
+        self.start_month.addItems(months.values())
+        self.end_month.addItems(months.values())
+
+        if self.parent().start_date is not None:
+            first_date = self.parent().start_date
+            second_date = self.parent().end_date
+        else:
+            first_date = datetime.date.today()
+            second_date = datetime.date.today()
+
+        self.start_day.setText(str(str(first_date).split('-')[-1]))
+        self.start_year.setText(str(str(first_date).split('-')[0]))
+        self.start_month.setCurrentText(months[int(str(first_date).split('-')[1])])
+
+        self.end_day.setText(str(str(second_date).split('-')[-1]))
+        self.end_year.setText(str(str(second_date).split('-')[0]))
+        self.end_month.setCurrentText(months[int(str(second_date).split('-')[1])])
+
+    def try_to_save(self):
+        if self.get_saving_verdict():
+            con.commit()
+            self.parent().update_registrations()
+            self.close()
+
+    def get_saving_verdict(self):
+        try:
+            start_month = 0
+            end_month = 0
+            for key in months:
+                if months[key] == self.start_month.currentText():
+                    start_month = key
+                if months[key] == self.end_month.currentText():
+                    end_month = key
+
+            start_day = self.start_day.text()
+            start_year = self.start_year.text()
+            start_date = datetime.date(int(start_year), int(start_month), int(start_day))
+
+            end_day = self.end_day.text()
+            end_year = self.end_year.text()
+            end_date = datetime.date(int(end_year), int(end_month), int(end_day))
+
+            if self.masters_comboBox.currentText() != 'Не важно':
+                self.parent().master_id = int(self.masters_comboBox.currentText().split(': ')[1][:-1])
+            self.parent().start_date = start_date
+            self.parent().end_date = end_date
+
+            assert start_date <= end_date
+            return True
+
+        except Exception:
+            self.statusbar.showMessage('Неверно заполнена форма')
+            return False
+
+
 class BarberShop(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setGeometry(200, 200, 1000, 600)
         self.setWindowTitle('Барбершоп')
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
 
         self.status = self.statusBar()
         self.tabWidget = QTabWidget(self)
@@ -315,12 +510,20 @@ class BarberShop(QMainWindow):
         schedule_layout.addWidget(self.scheduleTable, 0, 0, 8, 8)
 
         self.tabWidget.addTab(self.scheduleTab, 'Режим работы')
-        self.scheduleTable.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.scheduleTable.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
         # интерфейс второй страницы
         self.newRegistrationButton = QPushButton('Добавить запись', self)
         self.newRegistrationButton.clicked.connect(self.new_registration)
         registrations_layout.addWidget(self.newRegistrationButton, 0, 0, 1, 1)
+
+        self.addFiltersButton = QPushButton('Фильтр', self)
+        self.addFiltersButton.clicked.connect(self.add_filters)
+        registrations_layout.addWidget(self.addFiltersButton, 0, 1, 1, 1)
+
+        self.delFiltersButton = QPushButton('Удалить фильтры', self)
+        self.delFiltersButton.clicked.connect(self.del_filters)
+        registrations_layout.addWidget(self.delFiltersButton, 0, 2, 1, 1)
 
         self.delRegistrationButton = QPushButton('Удалить запись', self)
         self.delRegistrationButton.clicked.connect(self.del_registration)
@@ -330,7 +533,7 @@ class BarberShop(QMainWindow):
         registrations_layout.addWidget(self.registrationsTable, 1, 0, 8, 8)
 
         self.tabWidget.addTab(self.registrationsTab, 'Записи')
-        self.registrationsTable.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.registrationsTable.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
         # интерфейс третьей страницы
         self.workersTable = QTableWidget(self)
@@ -351,7 +554,7 @@ class BarberShop(QMainWindow):
         services_layout.addWidget(self.servicesTable, 1, 0, 8, 8)
 
         self.tabWidget.addTab(self.servicesTab, 'Услуги')
-        self.servicesTable.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.servicesTable.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
         # отбражение страниц
         main_layout = QGridLayout(self)
@@ -360,6 +563,10 @@ class BarberShop(QMainWindow):
         self.container = QWidget(self)
         self.container.setLayout(main_layout)
         self.setCentralWidget(self.container)
+
+        self.master_id = None
+        self.start_date = None
+        self.end_date = None
 
         # отображение данных
         self.show_schedule()
@@ -439,19 +646,30 @@ class BarberShop(QMainWindow):
         self.add_service_widget.show()
 
     def update_registrations(self):
-        registrations_query = cur.execute('''select distinct r.id, r.date, r.startTime, r.Service,
+        addition_to_query = ''
+        if self.master_id is not None:
+            addition_to_query = f'where r.MasterID = {self.master_id}'
+        registrations_query = cur.execute(f'''select distinct r.id, r.date, r.startTime, r.Service,
         w.Name as Master from Registrations as R, workers as W
-        inner join Registrations on R.MasterID = W.id
+        inner join Registrations on R.MasterID = W.id {addition_to_query}
         order by r.date, r.startTime''').fetchall()
 
-        self.registrationsTable.setRowCount(len(registrations_query))
+        if self.start_date is not None:
+            def is_row_ok(line):
+                if self.start_date <= datetime.datetime.strptime(line[1], '%Y-%m-%d').date() <= self.end_date:
+                    return True
+            useful_registrations_query = list(filter(is_row_ok, registrations_query))
+        else:
+            useful_registrations_query = registrations_query
+
+        self.registrationsTable.setRowCount(len(useful_registrations_query))
         self.registrationsTable.setColumnCount(9)
 
         title = ['ID', 'Число', 'Месяц', 'Год', 'День недели', 'Время\nначала',
                  'Время\nокончания', 'Услуга', 'Мастер']
         self.registrationsTable.setHorizontalHeaderLabels(title)
 
-        for i, elem in enumerate(registrations_query):
+        for i, elem in enumerate(useful_registrations_query):
             row_date_time = datetime.datetime.strptime(elem[1], '%Y-%m-%d')
             row_date = row_date_time.date()
             year, month, day, start_time = str(row_date).split('-') + [str(elem[2])]
@@ -462,6 +680,17 @@ class BarberShop(QMainWindow):
                 self.registrationsTable.item(i, j).setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
 
         self.registrationsTable.resizeColumnsToContents()
+
+    def add_filters(self):
+        self.status.showMessage('')
+        self.add_filters_widget = AddFiltersWidget(self)
+        self.add_filters_widget.show()
+
+    def del_filters(self):
+        self.master_id = None
+        self.start_date = None
+        self.end_date = None
+        self.update_registrations()
 
     def new_registration(self):
         self.status.showMessage('')
@@ -497,3 +726,5 @@ if __name__ == '__main__':
 
 # Когда изменятся название услуги, на которую уже есть запись, название услуги в таблице записей не изменяется,
 # ЭТО НЕ БАГ, А ФИЧА
+
+# toDo: сброс статуса при перекдючении вкладки
