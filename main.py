@@ -321,6 +321,7 @@ class AddRegistrationWidget(QMainWindow):
         self.setGeometry(900, 300, 1000, 400)
         self.setFixedSize(1000, 400)
         self.setWindowFlag(Qt.WindowCloseButtonHint, False)
+        self.setWindowTitle('Выберите время и мастера')
 
         self.date = self.parent().date
         self.status = self.statusBar()  # статусбар для вывода сообщений пользователю
@@ -418,7 +419,7 @@ class ChooseDateWidget(QMainWindow):
 
         # работа с параметрами окна
         self.setFixedSize(440, 440)
-        self.setWindowTitle('Новые данные')
+        self.setWindowTitle('Выбор даты и услуги')
         self.setWindowFlag(Qt.WindowCloseButtonHint, False)
         self.statusbar = self.statusBar()  # статусбар для вывода сообщений пользователю
 
