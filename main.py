@@ -634,7 +634,7 @@ class BarberShop(QMainWindow):
         self.servicesTable = QTableWidget(self)
         services_layout.addWidget(self.servicesTable, 1, 0, 8, 8)
 
-        self.tabWidget.addTab(self.servicesTab, 'Услуги') # добавление страницы в основной виджет
+        self.tabWidget.addTab(self.servicesTab, 'Услуги')  # добавление страницы в основной виджет
         self.servicesTable.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         # подгон размера ячеек под количество текста в ячейках
 
@@ -800,7 +800,7 @@ class BarberShop(QMainWindow):
     # функция, которая создает экземпляр класса AddFiltersWidget,
     # отвечающего за фильры таблицы registrationsTable, и отображает его
     def add_filters(self):
-        self.status.showMessage('') # обнуление сообщения статусбара
+        self.status.showMessage('')  # обнуление сообщения статусбара
         self.add_filters_widget = AddFiltersWidget(self)
         self.add_filters_widget.show()
 
@@ -834,8 +834,8 @@ class BarberShop(QMainWindow):
             # вспыхивающее окно, с помощью которого пользователь подтверждает/ аннулирует свое желание удалить запись
             unic = self.registrationsTable.item(row, 0).text()
             user_response = QMessageBox.question(self, 'Вы уверены?',
-                                                f'Вы уверены, что хотите удалить запись с id = {unic}',
-                                                QMessageBox.Yes | QMessageBox.No)
+                                                 f'Вы уверены, что хотите удалить запись с id = {unic}',
+                                                 QMessageBox.Yes | QMessageBox.No)
 
             if user_response == QMessageBox.Yes:
                 # сохранение изменений и их отображение в таблице
